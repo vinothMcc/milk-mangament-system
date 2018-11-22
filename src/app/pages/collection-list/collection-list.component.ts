@@ -1,23 +1,23 @@
-import { Component, OnInit, ViewChild } from "@angular/core";
-import { HttpService } from "../../services/http.service";
-import { MatPaginator, MatSort, MatTableDataSource } from "@angular/material";
-
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { HttpService } from '../../services/http.service';
+import { MatPaginator, MatSort, MatTableDataSource } from '@angular/material';
+import { UtilsService } from '../../services/utils.service';
 @Component({
-  selector: "app-collection-list",
-  templateUrl: "./collection-list.component.html",
-  styleUrls: ["./collection-list.component.scss"]
+  selector: 'app-collection-list',
+  templateUrl: './collection-list.component.html',
+  styleUrls: ['./collection-list.component.scss']
 })
 export class CollectionListComponent implements OnInit {
-  sheetName = "paymentCustomerDetails";
-  page = "paymentDetails";
+  customerDetailsPage = 'paymentCustomerDetails';
+  paymentDetailsPage = 'paymentDetails';
   collectionData = [];
   displayedColumns: string[] = [
-    "customer_name",
-    "total",
-    "grant_total",
-    "paid",
-    "edit",
-    "history"
+    'customer_name',
+    'total',
+    'grant_total',
+    'paid',
+    'edit',
+    'history'
   ];
   dataSource;
 
@@ -26,16 +26,24 @@ export class CollectionListComponent implements OnInit {
   @ViewChild(MatSort)
   sort: MatSort;
 
-  constructor(private http: HttpService) {}
+  constructor(private http: HttpService, private _utils: UtilsService) {}
   ngOnInit() {
     this.collectionList();
   }
 
   collectionList() {
-    const sheetParams =
-      "action=read&sheet_name=" + this.sheetName + "&page=" + this.page;
+    // const sheetParams =
+    //   'action=read&sheet_name=' +
+    //   this.customerDetailsPage +
+    //   '&page=' +
+    //   this.paymentDetailsPage;
+    const sheetParams = {
+      action: 'read',
+      sheet_name: this.customerDetailsPage,
+      page: this.paymentDetailsPage
+    };
     this.http.apiGet(sheetParams).subscribe(data => {
-      this.collectionData = data["records"];
+      this.collectionData = data['records'];
       this.dataSource = new MatTableDataSource();
       this.dataSource.data = this.collectionData;
       this.dataSource.sort = this.sort;
@@ -51,7 +59,17 @@ export class CollectionListComponent implements OnInit {
       this.dataSource.paginator.firstPage();
     }
   }
-  updateAmount(amountValue: number, id: string) {
-    console.log(amountValue, id);
+  updateAmount(amountValue: number, currentPayment) {
+    console.log(amountValue, currentPayment);
+    currentPayment['payment_id'] = this._utils.generateUUID();
+    currentPayment['paid'] = amountValue;
+    currentPayment['is_paid'] = true;
+    currentPayment['action'] = 'insert';
+    currentPayment['sheet_name'] = this.paymentDetailsPage;
+    console.log({ currentPayment });
+    // this.http.apiGet()
+    this.http.apiGet(currentPayment).subscribe(data => {
+      console.log('Return data : ', data);
+    });
   }
 }
